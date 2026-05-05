@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Ticket Review Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">📋</div>
+                <h1>Daily Ticket Review Tracker</h1>
+                <span class="badge badge-tcs">TCS</span>
+                <span class="badge badge-servicenow">SERVICENOW</span>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-secondary" id="templateBtn">📄 Template</button>
+                <button class="btn btn-secondary" id="exportBtn">📊 Export</button>
+                <button class="btn btn-primary" id="addTicketBtn">+ New Ticket</button>
+            </div>
+        </header>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span class="status-live">● LIVE</span>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- How to Use Section -->
+            <div class="how-to-use">
+                <button class="how-to-toggle">📖 How to Use ▼</button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="all-tickets">📋 All Tickets</button>
+                <button class="tab-btn" data-tab="today">📅 Today</button>
+                <button class="tab-btn" data-tab="by-technician">👤 By Technician</button>
+                <button class="tab-btn" data-tab="by-mode">🔧 By Mode</button>
+                <button class="tab-btn" data-tab="by-concept">💡 By Concept</button>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <div class="upload-box" id="uploadBox">
+                    <div class="upload-icon">📁</div>
+                    <h3>Upload ServiceNow Excel Export</h3>
+                    <p>Drag & drop .xlsx / .csv — auto-maps RequestID, Resolver Name, Mode of support, Concept, Age, Overdue</p>
+                    <button class="btn btn-upload" id="chooseFileBtn">Choose File</button>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" hidden>
+                </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="filters-section">
+                <select id="technicianFilter" class="filter-select">All Technicians</select>
+                <select id="modeFilter" class="filter-select">All Modes</select>
+                <select id="conceptFilter" class="filter-select">All Concepts</select>
+                <select id="typeFilter" class="filter-select">All Types</select>
+                <select id="statusFilter" class="filter-select">All</select>
+                <button class="btn btn-clear" id="clearFiltersBtn">✕ Clear</button>
+            </div>
+
+            <!-- Table Section -->
+            <div class="table-container">
+                <table id="ticketsTable" class="tickets-table">
+                    <thead>
+                        <tr>
+                            <th>REQ ID ↕</th>
+                            <th>DATE ↕</th>
+                            <th>TECHNICIAN ↕</th>
+                            <th>REQUESTER ↕</th>
+                            <th>SUBJECT ↕</th>
+                            <th>MODE ↕</th>
+                            <th>CONCEPT ↕</th>
+                            <th>TYPE ↕</th>
+                            <th>AGE ↕</th>
+                            <th>OVERDUE ↕</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ticketsBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Ticket</h2>
+            <form id="editForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>REQ ID:</label>
+                        <input type="text" id="editReqId" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date:</label>
+                        <input type="date" id="editDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Technician Name:</label>
+                        <input type="text" id="editTechnician" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Requester:</label>
+                        <input type="text" id="editRequester" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject:</label>
+                        <input type="text" id="editSubject" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mode of Support:</label>
+                        <select id="editMode" required>
+                            <option value="Store Visit">Store Visit</option>
+                            <option value="Remote Support">Remote Support</option>
+                            <option value="Phone">Phone</option>
+                            <option value="Email">Email</option>
+                            <option value="Chat">Chat</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Concept:</label>
+                        <input type="text" id="editConcept" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Type:</label>
+                        <select id="editType" required>
+                            <option value="Incident">Incident</option>
+                            <option value="Request">Request</option>
+                            <option value="Change">Change</option>
+                            <option value="Problem">Problem</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Age (days):</label>
+                        <input type="number" id="editAge" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Overdue:</label>
+                        <select id="editOverdue" required>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Ticket Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Ticket</h2>
+            <form id="addForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>REQ ID:</label>
+                        <input type="text" id="addReqId" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date:</label>
+                        <input type="date" id="addDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Technician Name:</label>
+                        <input type="text" id="addTechnician" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Requester:</label>
+                        <input type="text" id="addRequester" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject:</label>
+                        <input type="text" id="addSubject" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Mode of Support:</label>
+                        <select id="addMode" required>
+                            <option value="Store Visit">Store Visit</option>
+                            <option value="Remote Support">Remote Support</option>
+                            <option value="Phone">Phone</option>
+                            <option value="Email">Email</option>
+                            <option value="Chat">Chat</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Concept:</label>
+                        <input type="text" id="addConcept" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Type:</label>
+                        <select id="addType" required>
+                            <option value="Incident">Incident</option>
+                            <option value="Request">Request</option>
+                            <option value="Change">Change</option>
+                            <option value="Problem">Problem</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Age (days):</label>
+                        <input type="number" id="addAge" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Overdue:</label>
+                        <select id="addOverdue" required>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Add Ticket</button>
+                    <button type="button" class="btn btn-secondary" id="cancelAddBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
